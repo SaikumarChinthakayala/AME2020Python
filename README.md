@@ -1,6 +1,8 @@
 # ame2020
 !!!!!!!!! Package made using the help of Claude !!!!!!!!!
 
+Was not happy using Periodic table python package , so created this one
+
 Lookup atomic masses, mass excesses, and binding energies from the
 [AME2020 atomic mass evaluation](https://www-nds.iaea.org/amdc/) (`mass.mas20`),
 without re-parsing the fixed-width file yourself every time.
