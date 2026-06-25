@@ -4,7 +4,7 @@ Lookup atomic masses, mass excesses, and binding energies from the
 [AME2020 atomic mass evaluation](https://www-nds.iaea.org/amdc/) (`mass.mas20`),
 without re-parsing the fixed-width file yourself every time.
 
-## ⚠️ Data file placeholders
+## Data file placeholders
 
 Both bundled data files are the full evaluations:
 
