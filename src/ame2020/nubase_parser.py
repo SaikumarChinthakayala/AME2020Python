@@ -83,8 +83,13 @@ def _is_data_line(line: str) -> bool:
 
 def _parse_value_unc(raw_value: str, raw_unc: str) -> tuple:
     """Same convention as the AME parser: '#' = estimated, blank = NaN.
-    NUBASE has no '*' marker for not-calculable in these numeric fields
-    (blank is used instead), but we handle '*' defensively anyway.
+
+    NUBASE2020 uses blank fields for "not applicable", but in practice the
+    full file also contains other non-numeric placeholder tokens in some
+    fields (e.g. 'non-exist' for excitation energies that aren't defined).
+    Treat ANY value that doesn't parse as a float (after stripping '#') as
+    NaN rather than raising, since these all semantically mean "no numeric
+    value here".
     """
     raw_value = raw_value.strip()
     raw_unc = raw_unc.strip()
@@ -93,12 +98,20 @@ def _parse_value_unc(raw_value: str, raw_unc: str) -> tuple:
         return float("nan"), float("nan"), False
 
     is_estimated = "#" in raw_value or "#" in raw_unc
-    value = float(raw_value.replace("#", ""))
+
+    try:
+        value = float(raw_value.replace("#", ""))
+    except ValueError:
+        # Non-numeric placeholder (e.g. 'non-exist'); treat as unavailable.
+        return float("nan"), float("nan"), False
 
     if raw_unc in ("", "*"):
         unc = float("nan")
     else:
-        unc = float(raw_unc.replace("#", ""))
+        try:
+            unc = float(raw_unc.replace("#", ""))
+        except ValueError:
+            unc = float("nan")
 
     return value, unc, is_estimated
 

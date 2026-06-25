@@ -14,6 +14,7 @@ isomer's absolute mass excess.
 
 from __future__ import annotations
 
+import math
 from typing import Optional
 
 import pandas as pd
@@ -136,6 +137,18 @@ class Isomer:
     def symbol(self) -> str:
         suffix = f"-{self.state_label}" if self.state_label else ""
         return f"{self.A}{self.element}{suffix}"
+
+    @property
+    def has_known_mass(self) -> bool:
+        """False when NUBASE has no mass-excess value at all for this state
+        (seen in practice for some isomers where only half-life/spin-parity
+        are established but the mass excess is blank in the file, often
+        alongside an excitation energy marked 'non-exist'). Check this
+        before trusting `.mass` / `.mass_excess` -- they'll be NaN otherwise,
+        but a NaN alone doesn't tell you whether that's because the state
+        truly has no evaluated mass, vs. some other parsing gap.
+        """
+        return not math.isnan(self.mass_excess)
 
     @property
     def mass(self) -> float:

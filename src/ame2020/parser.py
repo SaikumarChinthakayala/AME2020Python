@@ -75,7 +75,9 @@ def _parse_value_unc(raw_value: str, raw_unc: str) -> tuple[float, float, bool]:
     '#' (estimated) markers.
 
     Returns (value, uncertainty, is_estimated). value/uncertainty are NaN
-    if not calculable.
+    if not calculable, including for any unrecognized non-numeric token
+    (defensive: AME-family files occasionally carry free-text placeholders
+    in fields that are usually numeric).
     """
     raw_value = raw_value.strip()
     raw_unc = raw_unc.strip()
@@ -84,12 +86,19 @@ def _parse_value_unc(raw_value: str, raw_unc: str) -> tuple[float, float, bool]:
         return float("nan"), float("nan"), False
 
     is_estimated = "#" in raw_value or "#" in raw_unc
-    value = float(raw_value.replace("#", ""))
+
+    try:
+        value = float(raw_value.replace("#", ""))
+    except ValueError:
+        return float("nan"), float("nan"), False
 
     if raw_unc == "" or raw_unc == "*":
         unc = float("nan")
     else:
-        unc = float(raw_unc.replace("#", ""))
+        try:
+            unc = float(raw_unc.replace("#", ""))
+        except ValueError:
+            unc = float("nan")
 
     return value, unc, is_estimated
 
@@ -110,14 +119,21 @@ def _parse_atomic_mass(int_part: str, frac_part: str, unc_part: str) -> tuple[fl
     frac_clean = frac_part.replace("#", "")
     unc_clean = unc_part.replace("#", "") if unc_part not in ("", "*") else "nan"
 
+    try:
+        micro_u_value = float(frac_clean)
+    except ValueError:
+        return float("nan"), float("nan"), False
+
     # int_part + frac_clean (micro-u, 6 decimal-equivalent digits) concatenated
     # as in the original Fortran fixed-width fields, e.g. "1" + "008664.91590"
     # -> mass = 1 + 008664.91590 / 1e6
-    micro_u_value = float(frac_clean)
     int_value = int(int_part) if int_part else 0
     atomic_mass_u = int_value + micro_u_value / 1e6
 
-    unc_u = float(unc_clean) / 1e6 if unc_clean != "nan" else float("nan")
+    try:
+        unc_u = float(unc_clean) / 1e6 if unc_clean != "nan" else float("nan")
+    except ValueError:
+        unc_u = float("nan")
 
     return atomic_mass_u, unc_u, is_estimated
 
