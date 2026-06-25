@@ -1,21 +1,22 @@
 # ame2020
-!!!!!!!!! Package made using the help of Claude !!!!!!!!!
-
-Was not happy using Periodic table python package , so created this one
 
 Lookup atomic masses, mass excesses, and binding energies from the
 [AME2020 atomic mass evaluation](https://www-nds.iaea.org/amdc/) (`mass.mas20`),
 without re-parsing the fixed-width file yourself every time.
 
-## ⚠️ Data file placeholder
+## ⚠️ Data file placeholders
 
-`src/ame2020/data/mass.mas20` currently contains **only the 16 lightest
-isotopes** (n, H, He, Li, Be up to A=6) as a placeholder used to validate the
-parser. **Replace this file with the full AME2020 `mass.mas20`** (available
-from the AMDC: https://www-nds.iaea.org/amdc/) before relying on this for
-Pd/Rh data. The parser itself handles the full file's format already
-(estimated values, non-calculable fields, negative N-Z, etc.) — only the
-bundled data needs swapping in.
+Both bundled data files are currently **small samples used to validate the
+parsers**, not the full evaluations:
+
+- `src/ame2020/data/mass.mas20` (AME2020) — only n, H, He, Li, Be up to A=6.
+- `src/ame2020/data/nubase.mas20` (NUBASE2020) — only A=1–14.
+
+**Replace both with the full files from the AMDC**
+(https://www-nds.iaea.org/amdc/) before relying on this for Pd/Rh data.
+Both parsers already handle the full files' format quirks (estimated
+values marked `#`, non-calculable fields marked `*`, isomer/level rows,
+negative N-Z, etc.) — only the bundled data needs swapping in.
 
 To replace it:
 ```bash
@@ -92,6 +93,55 @@ from ame2020.core import Isotope
 table = parse_mass_file("/path/to/mass.mas20")
 iso = Isotope("Pd", 102, table=table)
 ```
+
+## Isomer masses (NUBASE2020)
+
+`mass.mas20` (AME2020) only has ground states. Isomer/excited-state data
+comes from a separate file, `nubase.mas20` (NUBASE2020), which this package
+also parses — bundled at `src/ame2020/data/nubase.mas20`. **Same placeholder
+caveat applies**: it currently only covers A=1–14. Replace it with the full
+file from the AMDC before relying on it for Pd/Rh isomers.
+
+```python
+from ame2020 import Isomer, list_states
+
+# see what states exist for a nuclide
+list_states("Li", 10)
+#    level_index state_label  mass_excess_keV  exc_energy_keV half_life ...
+# 0            0                      33053.0             NaN        2.0 zs
+# 1            1           m          33250.0           200.0        3.7 zs
+# 2            2           n          33530.0           480.0       1.35 zs
+
+gs = Isomer("Li", 10)              # ground state (default)
+m  = Isomer("Li", 10, state="m")   # first/lowest isomer
+n  = Isomer("Li", 10, state="n")   # second isomer
+
+m.mass                 # absolute mass, u (derived from m.mass_excess)
+m.mass_excess          # keV, the ISOMER's own mass excess (not a delta)
+m.excitation_energy    # keV, above the ground state
+m.half_life, m.half_life_unit
+m.Jpi                  # spin-parity string, e.g. "1+"
+m.is_isomer            # True for state in {m, n}; False for gs/levels/IAS
+```
+
+Functional wrappers:
+```python
+from ame2020 import get_isomer_mass, get_excitation_energy
+
+get_isomer_mass("Li", 10, state="m")            # u
+get_excitation_energy("Li", 10, state="m")      # keV above ground state
+```
+
+NUBASE also lists higher-lying "levels" and isospin-analogue states
+(`state_label` of `p`, `q`, `i`, `j`, ...) for some nuclides — these are
+real entries in the file but generally aren't what's meant by "isomer" in
+the usual sense; `Isomer.is_isomer` is `False` for these (only `m`/`n`
+states are flagged `True`). You can still retrieve them explicitly via
+`state="i"` etc. if needed.
+
+Requesting a state that doesn't exist for a given nuclide raises
+`IsomerNotFoundError` (also a `KeyError` subclass) and lists which states
+*are* available.
 
 ## Notes
 
