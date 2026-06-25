@@ -6,24 +6,11 @@ without re-parsing the fixed-width file yourself every time.
 
 ## ⚠️ Data file placeholders
 
-Both bundled data files are currently **small samples used to validate the
-parsers**, not the full evaluations:
+Both bundled data files are the full evaluations:
 
-- `src/ame2020/data/mass.mas20` (AME2020) — only n, H, He, Li, Be up to A=6.
-- `src/ame2020/data/nubase.mas20` (NUBASE2020) — only A=1–14.
+- `src/ame2020/data/mass.mas20` (AME2020)
+- `src/ame2020/data/nubase.mas20` (NUBASE2020) 
 
-**Replace both with the full files from the AMDC**
-(https://www-nds.iaea.org/amdc/) before relying on this for Pd/Rh data.
-Both parsers already handle the full files' format quirks (estimated
-values marked `#`, non-calculable fields marked `*`, isomer/level rows,
-negative N-Z, etc.) — only the bundled data needs swapping in.
-
-To replace it:
-```bash
-cp /path/to/your/mass.mas20 src/ame2020/data/mass.mas20
-```
-Then reinstall (`pip install -e .`) or just restart your Python session —
-the table is cached in memory per-process via `load_default_table()`.
 
 ## Install
 
@@ -99,9 +86,7 @@ iso = Isotope("Pd", 102, table=table)
 
 `mass.mas20` (AME2020) only has ground states. Isomer/excited-state data
 comes from a separate file, `nubase.mas20` (NUBASE2020), which this package
-also parses — bundled at `src/ame2020/data/nubase.mas20`. **Same placeholder
-caveat applies**: it currently only covers A=1–14. Replace it with the full
-file from the AMDC before relying on it for Pd/Rh isomers.
+also parses — bundled at `src/ame2020/data/nubase.mas20`. 
 
 ```python
 from ame2020 import Isomer, list_states
