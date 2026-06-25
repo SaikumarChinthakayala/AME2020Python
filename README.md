@@ -28,9 +28,10 @@ the table is cached in memory per-process via `load_default_table()`.
 ## Install
 
 ```bash
-pip install -e .
+pip install .
 ```
 (`-e` for an editable/development install; drop it for a normal install.)
+A normal install (pip install .) copies your package into site-packages at install time. 
 
 ## Usage
 
